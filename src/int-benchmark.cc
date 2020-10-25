@@ -413,11 +413,21 @@ void buffer_writer_bigger(benchmark::State& state) {
 }
 BENCHMARK(buffer_writer_bigger);
 
-void fmtlib_bigger(benchmark::State& state) {
+void fmtlib_compile_bigger(benchmark::State& state) {
   for (auto s : state) {
     for (auto value : data) {
       char buffer[128];
       fmt::format_to(buffer, FMT_COMPILE("{} This is a bigger test of formatting a string {}"), value, value);
+    }
+  }
+}
+BENCHMARK(fmtlib_compile_bigger);
+
+void fmtlib_bigger(benchmark::State& state) {
+  for (auto s : state) {
+    for (auto value : data) {
+      char buffer[128];
+      fmt::format_to(buffer, "{} This is a bigger test of formatting a string {}", value, value);
     }
   }
 }
