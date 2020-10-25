@@ -416,8 +416,8 @@ BENCHMARK(buffer_writer_bigger);
 void fmtlib_bigger(benchmark::State& state) {
   for (auto s : state) {
     for (auto value : data) {
-      custom_memory_buffer buffer;
-      format_to(buffer, "{} This is a bigger test of formatting a string {}", value, value);
+      char buffer[128];
+      fmt::format_to(buffer, FMT_COMPILE("{} This is a bigger test of formatting a string {}"), value, value);
     }
   }
 }
@@ -431,7 +431,36 @@ void snprintf_bigger(benchmark::State& state) {
     }
   }
 }
-
 BENCHMARK(snprintf_bigger);
+
+void buffer_writer_small(benchmark::State& state) {
+  for (auto s : state) {
+    for (auto value : data) {
+      swoc::LocalBufferWriter<128> bw;
+      bw.print("{}", value);
+    }
+  }
+}
+BENCHMARK(buffer_writer_small);
+
+void fmtlib_small(benchmark::State& state) {
+  for (auto s : state) {
+    for (auto value : data) {
+      custom_memory_buffer buffer;
+      fmt::format_to(buffer, "{}", value);
+    }
+  }
+}
+BENCHMARK(fmtlib_small);
+
+void snprintf_small(benchmark::State& state) {
+  for (auto s : state) {
+    for (auto value : data) {
+      char buffer[128];
+      snprintf(buffer, 128, "%d", value);
+    }
+  }
+}
+BENCHMARK(snprintf_small);
 
 BENCHMARK_MAIN();
