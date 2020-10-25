@@ -16,6 +16,10 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include "swoc/MemSpan.h"
+#include "swoc/BufferWriter.h"
+#include "swoc/bwf_std.h"
+#include "swoc/bwf_ex.h"
 
 #if __has_include(<boost/format.hpp>)
 #  include <boost/format.hpp>
@@ -26,6 +30,9 @@
 
 #include "itostr.cc"
 #include "u2985907.h"
+
+using custom_memory_buffer =
+  fmt::basic_memory_buffer<char, 128>;
 
 // Integer to string converter by Alf P. Steinbach modified to return a pointer
 // past the end of the output to avoid calling strlen.
@@ -358,6 +365,31 @@ void decimal_from(benchmark::State& state) {
 }
 BENCHMARK(decimal_from);
 
+void buffer_writer(benchmark::State& state) {
+  auto dc = DigestChecker(state);
+  for (auto s : state) {
+    for (auto value : data) {
+      swoc::LocalBufferWriter<12> bw;
+      bw.print("{}", value);
+      dc.add(bw.view());
+    }
+  }
+}
+BENCHMARK(buffer_writer);
+
+
+void fmtlib(benchmark::State& state) {
+  auto dc = DigestChecker(state);
+  for (auto s : state) {
+    for (auto value : data) {
+      fmt::memory_buffer buffer;
+      format_to(buffer, "{}", value);
+      dc.add({buffer.data(), buffer.size()});
+    }
+  }
+}
+BENCHMARK(fmtlib);
+
 void stout_ltoa(benchmark::State& state) {
   auto dc = DigestChecker(state);
   for (auto s : state) {
@@ -370,5 +402,36 @@ void stout_ltoa(benchmark::State& state) {
   }
 }
 BENCHMARK(stout_ltoa);
+
+void buffer_writer_bigger(benchmark::State& state) {
+  for (auto s : state) {
+    for (auto value : data) {
+      swoc::LocalBufferWriter<128> bw;
+      bw.print("{} This is a bigger test of formatting a string {}", value, value);
+    }
+  }
+}
+BENCHMARK(buffer_writer_bigger);
+
+void fmtlib_bigger(benchmark::State& state) {
+  for (auto s : state) {
+    for (auto value : data) {
+      custom_memory_buffer buffer;
+      format_to(buffer, "{} This is a bigger test of formatting a string {}", value, value);
+    }
+  }
+}
+BENCHMARK(fmtlib_bigger);
+
+void snprintf_bigger(benchmark::State& state) {
+  for (auto s : state) {
+    for (auto value : data) {
+      char buffer[128];
+      snprintf(buffer, 128, "%d This is a bigger test of formatting a string %d", value, value);
+    }
+  }
+}
+
+BENCHMARK(snprintf_bigger);
 
 BENCHMARK_MAIN();
